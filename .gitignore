@@ -1,0 +1,15 @@
+# Archivos de configuración generados en tiempo de ejecución.
+# No se versionan porque cambian en cada ejecución de la app y son datos,
+# no código fuente. Para la entrega, copia manualmente un ejemplo a
+# ejemplos/config_ejemplo.json y ejemplos/config_ejemplo.bak (esa carpeta
+# sí se sube a git).
+config.json
+config.tmp
+config.bak
+backup.bak
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
