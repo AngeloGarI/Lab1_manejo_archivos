@@ -91,3 +91,40 @@ class ConfigManager:
         Guarda la configuración usando escritura atómica (.tmp -> .json) y genera un backup (.bak).
         Retorna (éxito: bool, mensaje: str).
         """
+        # 1. Validar la estructura de la nueva configuración antes de intentar guardar
+        if not cls.validar_estructura(nueva_config):
+            return False, "Error: La configuración a guardar tiene datos o formatos inválidos."
+
+        try:
+            # 2. Generar Backup (.bak) de la configuración previa si ya existe un archivo activo
+            if os.path.exists(CONFIG_FILE):
+                try:
+                    shutil.copy2(CONFIG_FILE, BACKUP_FILE)
+                    logging.info(f"Respaldo creado con éxito en '{BACKUP_FILE}'.")
+                except Exception as e:
+                    logging.warning(f"No se pudo crear el archivo de respaldo: {e}")
+
+            # 3. Escritura Segura en archivo temporal (.tmp) en UTF-8
+            # ensure_ascii=False para guardar tildes y ñ correctamente en texto claro
+            with open(TEMP_FILE, "w", encoding="utf-8") as f:
+                json.dump(nueva_config, f, ensure_ascii=False, indent=4)
+
+            # 4. Reemplazo Atómico del archivo final
+            # os.replace sobrescribe atomicamente el destino sin corromperlo ante cortes abruptos
+            os.replace(TEMP_FILE, CONFIG_FILE)
+            logging.info("Configuración guardada y reemplazada atómicamente.")
+
+            return True, "Configuración guardada y respaldada correctamente."
+
+        except PermissionError:
+            logging.error("Sin permisos de escritura en la ruta de trabajo.")
+            # Limpieza del temporal en caso de fallo
+            if os.path.exists(TEMP_FILE):
+                os.remove(TEMP_FILE)
+            return False, "Error: Sin permisos de escritura para guardar los cambios."
+
+        except Exception as e:
+            logging.error(f"Error crítico al guardar configuración: {e}")
+            if os.path.exists(TEMP_FILE):
+                os.remove(TEMP_FILE)
+            return False, f"Fallo al guardar: {str(e)}"
