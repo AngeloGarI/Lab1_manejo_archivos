@@ -1,5 +1,3 @@
----
-```markdown
 # Laboratorio No. 1: Aplicación de Escritorio con Gestión de Configuración de Usuario
 
 **Universidad:** Universidad Rafael Landívar, Campus San Alberto Hurtado, S.J. de Quetzaltenango  
@@ -39,7 +37,6 @@ lab1_archivos/
 ├── config.bak             # Archivo de respaldo automático de la versión previa
 ├── main.py                # Punto de entrada de la aplicación
 └── README.md              # Documentación del proyecto
-
 ```
 
 ---
