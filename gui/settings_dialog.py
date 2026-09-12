@@ -162,3 +162,104 @@ class SettingsDialog(QDialog):
         self.config["idioma"] = self.combo_idioma.currentText()
         self.config["tamano_fuente"] = self.spin_fuente.value()
 
+        if not self.config["nombre_usuario"]:
+            QMessageBox.warning(self, "Validación", "El nombre de usuario no puede estar vacío.")
+            return
+
+        exito, mensaje, backup_ok = self.on_save_callback(self.config)
+        if exito:
+            if backup_ok:
+                QMessageBox.information(self, "Guardado", mensaje)
+            else:
+                QMessageBox.warning(self, "Guardado con advertencia", mensaje)
+            self.accept()
+        else:
+            QMessageBox.critical(self, "Error al guardar", mensaje)
+
+    def aplicar_estilos(self):
+        self.setStyleSheet(f"""
+            QDialog {{
+                background: {GRADIENT_BG};
+            }}
+            QLabel {{
+                color: {COLOR_TEXT};
+                font-size: 10.5pt;
+            }}
+            QLabel#header {{
+                font-size: 17pt;
+                font-weight: 600;
+                color: {COLOR_TEXT};
+            }}
+            QFrame#divisorAccent {{
+                background-color: {COLOR_ACCENT};
+                max-height: 2px;
+                border: none;
+                margin-bottom: 4px;
+            }}
+            QLabel#subheader {{
+                color: {COLOR_TEXT_MUTED};
+                font-size: 9.5pt;
+                margin-bottom: 4px;
+            }}
+            QGroupBox {{
+                color: {COLOR_TEXT_MUTED};
+                font-size: 9.5pt;
+                font-weight: 600;
+                border: 1px solid {COLOR_BORDER};
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 14px;
+                background-color: {COLOR_PANEL};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 4px;
+            }}
+            QLineEdit, QComboBox, QSpinBox {{
+                background-color: {COLOR_INPUT_BG};
+                color: {COLOR_TEXT};
+                border: 1px solid {COLOR_BORDER};
+                border-radius: 6px;
+                padding: 6px 8px;
+                font-size: 10pt;
+            }}
+            QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{
+                border: 1px solid {COLOR_ACCENT};
+            }}
+            QLineEdit#pathField {{
+                font-family: {FONT_MONO};
+                font-size: 9pt;
+                color: {COLOR_TEXT_MUTED};
+            }}
+            QPushButton {{
+                background-color: {COLOR_BORDER};
+                color: {COLOR_TEXT};
+                border: none;
+                border-radius: 6px;
+                padding: 7px 14px;
+                font-size: 9.5pt;
+            }}
+            QPushButton:hover {{
+                background-color: #363C4A;
+            }}
+            QPushButton#btnPrincipal {{
+                background-color: {COLOR_ACCENT};
+                color: #0D1210;
+                font-weight: 600;
+                padding: 9px 16px;
+            }}
+            QPushButton#btnPrincipal:hover {{
+                background-color: {COLOR_ACCENT_HOVER};
+            }}
+            QPushButton#btnSecundario {{
+                background-color: transparent;
+                color: {COLOR_TEXT_MUTED};
+                border: 1px solid {COLOR_BORDER};
+                padding: 9px 16px;
+            }}
+            QPushButton#btnSecundario:hover {{
+                color: {COLOR_TEXT};
+                border-color: {COLOR_TEXT_MUTED};
+            }}
+        """)
