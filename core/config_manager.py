@@ -3,10 +3,13 @@ import json
 import shutil
 import logging
 
-logging.basicConfig(level=logging.INFO, format = "%(asctime)s - %(levelname)s - %(message)s")
-CONFIG_FILE = "config.json"
-BACKUP_FILE = "backup.bak"
-TEMP_FILE = "config.tmp"
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+_CORE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(_CORE_DIR)
+
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+BACKUP_FILE = os.path.join(BASE_DIR, "config.bak")
+TEMP_FILE = os.path.join(BASE_DIR, "config.tmp")
 
 DEFAULT_CONFIG = {
     "nombre_usuario": "Usuario Inicial",
@@ -18,15 +21,16 @@ DEFAULT_CONFIG = {
     "foto_perfil": ""
 }
 
+
 class ConfigManager:
     """
-    Manejo de errores, persistencia y backups
+    Manejo de errores, persistencia y backups.
     """
 
     @staticmethod
     def validar_estructura(data: dict) -> bool:
         """
-        Mira que el diccionario tenga todas las llaves requeridas
+        Mira que el diccionario tenga todas las llaves requeridas con el tipo esperado.
         """
         if not isinstance(data, dict):
             return False
@@ -54,16 +58,16 @@ class ConfigManager:
         Retorna (config_dict, estado_mensaje).
         En caso de error (ausente, corrupto, sin permisos), cae de forma segura a DEFAULT_CONFIG.
         """
-        #Archivo Ausente
+        # Archivo ausente
         if not os.path.exists(CONFIG_FILE):
-            logging.info("Archivo config.json ausente. Creando/Usando configuración por defecto.")
+            logging.info("Archivo config.json ausente. Usando configuración por defecto.")
             return DEFAULT_CONFIG.copy(), "Archivo ausente. Se cargaron valores por defecto."
 
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            #Estructura Inválida o Incompleta
+            # Estructura inválida o incompleta
             if not cls.validar_estructura(data):
                 raise ValueError("El esquema de datos del archivo JSON es inválido.")
 
@@ -71,60 +75,65 @@ class ConfigManager:
             return data, "Configuración cargada con éxito."
 
         except PermissionError:
-            # Sin Permisos de Lectura
             logging.error("Sin permisos de lectura sobre config.json.")
-            return DEFAULT_CONFIG.copy(), "Error: Sin permisos de lectura. Se usaron valores por defecto."
+            return DEFAULT_CONFIG.copy(), "Error: sin permisos de lectura. Se usaron valores por defecto."
 
         except (json.JSONDecodeError, ValueError) as e:
-            # Archivo Corrupto / JSON mal formado
             logging.error(f"Archivo de configuración corrupto o mal formado: {e}")
             return DEFAULT_CONFIG.copy(), "Archivo corrupto o inválido. Se restauraron valores por defecto."
 
         except Exception as e:
-            # Red de seguridad para cualquier otro error imprevisto
             logging.critical(f"Error inesperado al cargar configuración: {e}")
             return DEFAULT_CONFIG.copy(), f"Error inesperado: {str(e)}"
 
     @classmethod
-    def guardar_configuracion(cls, nueva_config: dict) -> tuple[dict, str]:
+    def guardar_configuracion(cls, nueva_config: dict) -> tuple[bool, str, bool]:
         """
         Guarda la configuración usando escritura atómica (.tmp -> .json) y genera un backup (.bak).
-        Retorna (éxito: bool, mensaje: str).
+
+        Retorna (exito, mensaje, backup_ok):
+          - exito: si el guardado del archivo principal fue correcto.
+          - mensaje: texto para mostrar al usuario.
+          - backup_ok: si el respaldo se creó correctamente (puede ser False aunque exito sea True).
         """
-        # 1. Validar la estructura de la nueva configuración antes de intentar guardar
         if not cls.validar_estructura(nueva_config):
-            return False, "Error: La configuración a guardar tiene datos o formatos inválidos."
+            return False, "Error: la configuración a guardar tiene datos o formatos inválidos.", False
+
+        backup_ok = True
+
+        # 1. Respaldo (.bak) de la configuración previa, si existe un archivo activo
+        if os.path.exists(CONFIG_FILE):
+            try:
+                shutil.copy2(CONFIG_FILE, BACKUP_FILE)
+                logging.info(f"Respaldo creado con éxito en '{BACKUP_FILE}'.")
+            except Exception as e:
+                backup_ok = False
+                logging.warning(f"No se pudo crear el archivo de respaldo: {e}")
 
         try:
-            # 2. Generar Backup (.bak) de la configuración previa si ya existe un archivo activo
-            if os.path.exists(CONFIG_FILE):
-                try:
-                    shutil.copy2(CONFIG_FILE, BACKUP_FILE)
-                    logging.info(f"Respaldo creado con éxito en '{BACKUP_FILE}'.")
-                except Exception as e:
-                    logging.warning(f"No se pudo crear el archivo de respaldo: {e}")
-
-            # 3. Escritura Segura en archivo temporal (.tmp) en UTF-8
-            # ensure_ascii=False para guardar tildes y ñ correctamente en texto claro
+            # 2. Escritura segura en archivo temporal (.tmp) en UTF-8
             with open(TEMP_FILE, "w", encoding="utf-8") as f:
                 json.dump(nueva_config, f, ensure_ascii=False, indent=4)
+                f.flush()
+                os.fsync(f.fileno())  # fuerza la escritura a disco antes de renombrar
 
-            # 4. Reemplazo Atómico del archivo final
-            # os.replace sobrescribe atomicamente el destino sin corromperlo ante cortes abruptos
+            # 3. Reemplazo atómico del archivo final
             os.replace(TEMP_FILE, CONFIG_FILE)
             logging.info("Configuración guardada y reemplazada atómicamente.")
 
-            return True, "Configuración guardada y respaldada correctamente."
+            if backup_ok:
+                return True, "Configuración guardada y respaldada correctamente.", True
+            else:
+                return True, "Configuración guardada, pero no se pudo crear el respaldo (.bak).", False
 
         except PermissionError:
             logging.error("Sin permisos de escritura en la ruta de trabajo.")
-            # Limpieza del temporal en caso de fallo
             if os.path.exists(TEMP_FILE):
                 os.remove(TEMP_FILE)
-            return False, "Error: Sin permisos de escritura para guardar los cambios."
+            return False, "Error: sin permisos de escritura para guardar los cambios.", backup_ok
 
         except Exception as e:
             logging.error(f"Error crítico al guardar configuración: {e}")
             if os.path.exists(TEMP_FILE):
                 os.remove(TEMP_FILE)
-            return False, f"Fallo al guardar: {str(e)}"
+            return False, f"Fallo al guardar: {str(e)}", backup_ok
