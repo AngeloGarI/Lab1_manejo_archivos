@@ -14,6 +14,46 @@ COLOR_PANEL_BORDE = "#2E3750"
 COLOR_ACCENT = "#4FB286"
 COLOR_TEXT_MUTED = "#8B93A5"
 
+# Diccionario de traducción según la opción elegida en Settings
+TRADUCCIONES = {
+    "es-ES": {
+        "menu_archivo": "Archivo",
+        "menu_edicion": "Edición",
+        "menu_ver": "Ver",
+        "menu_settings": "Settings",
+        "accion_nuevo": "Nuevo",
+        "accion_abrir": "Abrir",
+        "accion_salir": "Salir",
+        "accion_deshacer": "Deshacer",
+        "accion_rehacer": "Rehacer",
+        "accion_zoom_in": "Zoom In",
+        "accion_zoom_out": "Zoom Out",
+        "accion_configurar": "Configurar...",
+        "stat_idioma": "Idioma",
+        "stat_tema": "Tema",
+        "stat_fuente": "Fuente",
+        "msg_simulado": "La función '{}' es simulada según los requerimientos de la guía."
+    },
+    "en-US": {
+        "menu_archivo": "File",
+        "menu_edicion": "Edit",
+        "menu_ver": "View",
+        "menu_settings": "Settings",
+        "accion_nuevo": "New",
+        "accion_abrir": "Open",
+        "accion_salir": "Exit",
+        "accion_deshacer": "Undo",
+        "accion_rehacer": "Redo",
+        "accion_zoom_in": "Zoom In",
+        "accion_zoom_out": "Zoom Out",
+        "accion_configurar": "Configure...",
+        "stat_idioma": "Language",
+        "stat_tema": "Theme",
+        "stat_fuente": "Font Size",
+        "msg_simulado": "The '{}' feature is simulated as per project requirements."
+    }
+}
+
 
 class MainWindow(QMainWindow):
     """Ventana principal con barra de menú y actualización dinámica de UI."""
@@ -36,38 +76,38 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         menu_bar = self.menuBar()
 
-        # 1. Menú Archivo (simulado)
-        menu_archivo = menu_bar.addMenu("Archivo")
-        self.agregar_accion_simulada(menu_archivo, "Nuevo")
-        self.agregar_accion_simulada(menu_archivo, "Abrir")
-        menu_archivo.addSeparator()
-        action_salir = QAction("Salir", self)
-        action_salir.triggered.connect(self.close)
-        menu_archivo.addAction(action_salir)
+        # 1. Menú Archivo
+        self.menu_archivo = menu_bar.addMenu("")
+        self.action_nuevo = self.agregar_accion_simulada(self.menu_archivo, "accion_nuevo")
+        self.action_abrir = self.agregar_accion_simulada(self.menu_archivo, "accion_abrir")
+        self.menu_archivo.addSeparator()
+        self.action_salir = QAction("", self)
+        self.action_salir.triggered.connect(self.close)
+        self.menu_archivo.addAction(self.action_salir)
 
-        # 2. Menú Edición (simulado)
-        menu_edicion = menu_bar.addMenu("Edición")
-        self.agregar_accion_simulada(menu_edicion, "Deshacer")
-        self.agregar_accion_simulada(menu_edicion, "Rehacer")
+        # 2. Menú Edición
+        self.menu_edicion = menu_bar.addMenu("")
+        self.action_deshacer = self.agregar_accion_simulada(self.menu_edicion, "accion_deshacer")
+        self.action_rehacer = self.agregar_accion_simulada(self.menu_edicion, "accion_rehacer")
 
-        # 3. Menú Ver (simulado)
-        menu_ver = menu_bar.addMenu("Ver")
-        self.agregar_accion_simulada(menu_ver, "Zoom In")
-        self.agregar_accion_simulada(menu_ver, "Zoom Out")
+        # 3. Menú Ver
+        self.menu_ver = menu_bar.addMenu("")
+        self.action_zoom_in = self.agregar_accion_simulada(self.menu_ver, "accion_zoom_in")
+        self.action_zoom_out = self.agregar_accion_simulada(self.menu_ver, "accion_zoom_out")
 
-        # 4. Menú Settings (funcional)
-        menu_settings = menu_bar.addMenu("Settings")
-        action_abrir_settings = QAction("Configurar...", self)
-        action_abrir_settings.triggered.connect(self.abrir_settings)
-        menu_settings.addAction(action_abrir_settings)
+        # 4. Menú Settings
+        self.menu_settings = menu_bar.addMenu("")
+        self.action_configurar = QAction("", self)
+        self.action_configurar.triggered.connect(self.abrir_settings)
+        self.menu_settings.addAction(self.action_configurar)
 
-        # Widget central: centra una tarjeta de perfil sobre el fondo degradado
+        # Widget central
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         outer_layout = QVBoxLayout(self.central_widget)
         outer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # --- Tarjeta de perfil (elevada respecto al fondo) ---
+        # Tarjeta de perfil
         self.tarjeta_perfil = QFrame()
         self.tarjeta_perfil.setObjectName("tarjetaPerfil")
         self.tarjeta_perfil.setFixedWidth(460)
@@ -86,13 +126,12 @@ class MainWindow(QMainWindow):
         self.lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tarjeta_layout.addWidget(self.lbl_nombre)
 
-        # Divisor sutil entre el nombre y las estadísticas de configuración
         divisor = QFrame()
         divisor.setFrameShape(QFrame.Shape.HLine)
         divisor.setObjectName("divisor")
         tarjeta_layout.addWidget(divisor)
 
-        # Fila de mini-estadísticas: Idioma | Tema | Fuente
+        # Fila de mini-estadísticas
         fila_stats = QHBoxLayout()
         fila_stats.setSpacing(0)
         self.stat_idioma = self._crear_stat("Idioma")
@@ -108,7 +147,6 @@ class MainWindow(QMainWindow):
         outer_layout.addWidget(self.tarjeta_perfil)
 
     def _crear_stat(self, etiqueta: str) -> dict:
-        """Crea una mini-columna de estadística (etiqueta arriba, valor abajo)."""
         layout = QVBoxLayout()
         layout.setSpacing(2)
         lbl_etiqueta = QLabel(etiqueta)
@@ -119,7 +157,7 @@ class MainWindow(QMainWindow):
         lbl_valor.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_etiqueta)
         layout.addWidget(lbl_valor)
-        return {"layout": layout, "valor": lbl_valor}
+        return {"layout": layout, "etiqueta": lbl_etiqueta, "valor": lbl_valor}
 
     def _crear_divisor_vertical(self) -> QFrame:
         divisor = QFrame()
@@ -128,21 +166,27 @@ class MainWindow(QMainWindow):
         return divisor
 
     def resizeEvent(self, event):
-        """Escala la tarjeta de perfil junto con la ventana, dentro de un rango
-        razonable, para que no se vea diminuta cuando la ventana está maximizada
-        ni demasiado ancha en una ventana pequeña."""
         super().resizeEvent(event)
         ancho_objetivo = int(self.width() * 0.42)
         ancho_final = max(460, min(680, ancho_objetivo))
         self.tarjeta_perfil.setFixedWidth(ancho_final)
 
-    def agregar_accion_simulada(self, menu, nombre: str):
-        """Crea acciones simuladas que muestran un mensaje informativo al hacer clic."""
-        accion = QAction(f"{nombre} (Simulado)", self)
-        accion.triggered.connect(lambda: QMessageBox.information(
-            self, "Opción simulada", f"La función '{nombre}' es simulada según los requerimientos de la guía."
-        ))
+    def agregar_accion_simulada(self, menu, clave_traduccion: str) -> QAction:
+        """Crea una acción simulada que responde en el idioma seleccionado."""
+        accion = QAction("", self)
+        accion.triggered.connect(lambda: self.mostrar_mensaje_simulado(clave_traduccion))
         menu.addAction(accion)
+        return accion
+
+    def mostrar_mensaje_simulado(self, clave_traduccion: str):
+        idioma = self.config.get("idioma", "es-ES")
+        traduccion = TRADUCCIONES.get(idioma, TRADUCCIONES["es-ES"])
+        nombre_accion = traduccion.get(clave_traduccion, "Acción")
+        QMessageBox.information(
+            self,
+            "Opción simulada",
+            traduccion["msg_simulado"].format(nombre_accion)
+        )
 
     def abrir_settings(self):
         dialog = SettingsDialog(self.config, self.guardar_nueva_config, self)
@@ -156,7 +200,6 @@ class MainWindow(QMainWindow):
         return exito, msg, backup_ok
 
     def obtener_pixmap_circular(self, ruta_imagen: str, tamano: int) -> QPixmap:
-        """Carga una imagen y la recorta en forma circular."""
         original = QPixmap(ruta_imagen)
         if original.isNull():
             return QPixmap()
@@ -185,9 +228,33 @@ class MainWindow(QMainWindow):
         return out_pixmap
 
     def aplicar_configuracion_ui(self):
-        """Aplica estilos, foto circular y textos actualizados."""
-        tamano_fuente = self.config["tamano_fuente"]
+        """Aplica estilos, traducción dinámica y textos actualizados."""
+        idioma = self.config.get("idioma", "es-ES")
+        traduccion = TRADUCCIONES.get(idioma, TRADUCCIONES["es-ES"])
 
+        # Actualizar textos de los Menús
+        self.menu_archivo.setTitle(traduccion["menu_archivo"])
+        self.action_nuevo.setText(f"{traduccion['accion_nuevo']} (Simulado)")
+        self.action_abrir.setText(f"{traduccion['accion_abrir']} (Simulado)")
+        self.action_salir.setText(traduccion["accion_salir"])
+
+        self.menu_edicion.setTitle(traduccion["menu_edicion"])
+        self.action_deshacer.setText(f"{traduccion['accion_deshacer']} (Simulado)")
+        self.action_rehacer.setText(f"{traduccion['accion_rehacer']} (Simulado)")
+
+        self.menu_ver.setTitle(traduccion["menu_ver"])
+        self.action_zoom_in.setText(f"{traduccion['accion_zoom_in']} (Simulado)")
+        self.action_zoom_out.setText(f"{traduccion['accion_zoom_out']} (Simulado)")
+
+        self.menu_settings.setTitle(traduccion["menu_settings"])
+        self.action_configurar.setText(traduccion["accion_configurar"])
+
+        # Actualizar etiquetas de la tarjeta de perfil
+        self.stat_idioma["etiqueta"].setText(traduccion["stat_idioma"])
+        self.stat_tema["etiqueta"].setText(traduccion["stat_tema"])
+        self.stat_fuente["etiqueta"].setText(traduccion["stat_fuente"])
+
+        tamano_fuente = self.config["tamano_fuente"]
         self.lbl_nombre.setFont(QFont("Segoe UI", max(tamano_fuente, 13), QFont.Weight.DemiBold))
         self.lbl_nombre.setText(self.config["nombre_usuario"])
 
